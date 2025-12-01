@@ -1,4 +1,21 @@
 
+
+https://github.com/user-attachments/assets/9c93e11a-3dc3-4c86-b1c1-888b482aa85d
+
+https://github.com/user-attachments/assets/e80181a5-26e1-423f-aea4-ff2219309692
+
+https://github.com/user-attachments/assets/d7a00f09-3159-411c-90df-69c352c36dbb
+
+https://github.com/user-attachments/assets/c24a1899-6baa-42b3-887d-b22fc2ddeda7
+
+https://github.com/user-attachments/assets/2938cb61-a0ac-42db-9a79-ae3b9708c7c9
+
+
+
+
+
+
+
 # 1.DERS ARM İŞLEMCİ GİRİŞ
 
 ---
