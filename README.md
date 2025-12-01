@@ -1,4 +1,4 @@
-
+[5 STERLLARİS LM3S811 GPIO 266687311803806da028c784ecca06ed.md](https://github.com/user-attachments/files/23861499/5.STERLLARIS.LM3S811.GPIO.266687311803806da028c784ecca06ed.md)
 
 https://github.com/user-attachments/assets/9c93e11a-3dc3-4c86-b1c1-888b482aa85d
 
@@ -1072,9 +1072,374 @@ Modern ARM işlemcilerde bu döngü **pipeline** yapısıyla çalışır. Yani b
 | **Wr** | Write-back (sonuç yazılır) |
 | **Ret** | Retire (talimat tamamlanır) |
 
+---------------------------------------------------------------------
+
+# 4.STELLARİS LM3S811
+
+**LM3S811 CLOCK VE PLL YAPISI**
+
+LM3S811 mikrodenetleyicisi, Texas Instruments’ın Stellaris serisinden olup ARM Cortex-M3 mimarisi üzerine kuruludur. Saat (clock) sistemi ve PLL (Phase-Locked Loop) yapısı oldukça esnek ve performans odaklıdır. İşte detaylar:
+
 ---
 
-###
+### ⏱️ İç Clock Hızı
+
+- **Maksimum sistem saat frekansı**: **50 MHz**
+- Bu frekans, dahili PLL kullanılarak elde edilir.
+- Mikrodenetleyici, harici bir kristal osilatör (örneğin 6 MHz veya 8 MHz) ile beslenebilir ve PLL bu frekansı çarparak sistem saatini üretir.
+
+---
+
+### 🔄 PLL (Phase-Locked Loop) Yapısı
+
+PLL, düşük frekanslı bir giriş saatini alıp yüksek frekanslı bir sistem saati üretmek için kullanılır:
+
+- **Giriş kaynakları**:
+    - Harici kristal osilatör (XTAL)
+    - Dahili osilatör (PIOSC – Precision Internal Oscillator)
+- **Çıkış frekansı**: PLL, giriş frekansını çarpan bir yapıdadır. Örneğin, 8 MHz girişten 400 MHz VCO frekansı üretilebilir, ardından bu frekans bölünerek 50 MHz sistem saatine dönüştürülür.
+- **Saat ağacı**: LM3S811’de saat sinyali, sistem saatine ek olarak ADC, UART, SSI gibi çevresel birimlere de dağıtılır. Her birim için ayrı clock gating yapılabilir.
+
+---
+
+### 📊 Teknik Özellik Özeti
+
+| Özellik | Değer / Açıklama |
+| --- | --- |
+| Maksimum Clock | 50 MHz |
+| PLL VCO Frekansı | 400 MHz'e kadar |
+| Giriş Kaynağı | Harici XTAL veya Dahili PIOSC |
+| PLL Kullanımı | Frekans çarpımı ve bölme ile saat üretimi |
+| Saat Dağıtımı | Clock gating ile çevresel birimlere |
+
+---
+
+### 🧠 Ekstra Notlar
+
+- PLL konfigürasyonu yazılım üzerinden yapılır (örneğin, `SysCtlClockSet()` fonksiyonu ile).
+- StellarisWare kütüphanesi, saat ayarlarını kolaylaştıran API’ler sunar.
+- Güç tüketimini azaltmak için düşük frekanslı çalışma modları da desteklenir.
+
+---
+
+LM3S811 mikrodenetleyicisinin **startup dosyası**, sistemin ilk çalıştırılmasında kritik rol oynayan bir yapılandırma dosyasıdır. Genellikle `startup.s` veya `startup_LM3S811.s` adıyla gelir ve aşağıdaki bileşenleri içerir:
+
+---
+
+### 🧩 Startup Dosyasının Temel İçeriği
+
+| Bölüm | Açıklama |
+| --- | --- |
+| **Vektör Tablosu** | Tüm kesme ve istisna (exception) vektörlerinin adreslerini içerir. Örneğin: Reset, NMI, HardFault, SysTick, UART, GPIO vs. |
+| **Reset Handler** | Sistemin ilk çalıştırıldığında çağrılan fonksiyon. Genellikle `Reset_Handler` veya `__main` fonksiyonuna yönlendirir. |
+| **Stack ve Heap Tanımları** | Stack başlangıç adresi ve büyüklüğü tanımlanır. Heap varsa onun da sınırları belirlenir. |
+| **Kesme Fonksiyonları (Weak Aliases)** | Her kesme için varsayılan boş fonksiyonlar tanımlanır. Bunlar `__attribute__((weak))` ile işaretlenir ve kullanıcı kendi ISR’ını tanımlamazsa bu boş fonksiyonlar çağrılır. |
+| **Bellek Başlangıç Ayarları** | `.data`, `.bss`, `.text` gibi bellek segmentlerinin başlangıç adresleri ve kopyalama işlemleri tanımlanır. |
+| **Assembly Direktifleri** | ARM Cortex-M3 mimarisi için uygun `AREA`, `EXPORT`, `IMPORT`, `ENTRY` gibi direktifler kullanılır. |
+
+---
+
+### 📌 Örnek Vektör Tablosu Yapısı
+
+```
+__Vectors:
+    .word   _estack                 ; Stack pointer
+    .word   Reset_Handler          ; Reset
+    .word   NMI_Handler            ; NMI
+    .word   HardFault_Handler      ; Hard Fault
+    ...
+    .word   UART0_Handler          ; UART0 interrupt
+    .word   GPIOA_Handler          ; GPIO Port A interrupt
+
+```
+
+---
+
+### 🔧 Kullanım Amacı
+
+- Mikrodenetleyici ilk çalıştığında **startup dosyası** kontrolü ele alır.
+- Bellek bölgelerini hazırlar, kesme vektörlerini yerleştirir ve `main()` fonksiyonuna geçiş yapar.
+- Bu dosya olmadan sistem düzgün çalışmaz; özellikle kesmeler ve bellek yönetimi eksik kalır.
+
+---
+
+### 📁 Nerede Bulunur?
+
+- Keil MDK veya IAR gibi IDE’lerde proje oluşturduğunda otomatik olarak eklenir.
+- StellarisWare veya TivaWare SDK içinde hazır olarak gelir (`startup_LM3S811.s` veya `.c` şeklinde).
+
+
+------------------------------------------------------------------------------------
+# 5.STERLLARİS LM3S811 GPIO
+
+---
+
+## 🧠 GPIO Nedir?
+
+**GPIO (General Purpose Input/Output)** yani *Genel Amaçlı Giriş/Çıkış*, mikrodenetleyicilerdeki pinlerin dijital sinyalleri almak (giriş) veya göndermek (çıkış) için kullanılan temel arayüzdür.
+
+### Temel Özellikleri:
+
+- Her GPIO pini **giriş (input)** veya **çıkış (output)** olarak yapılandırılabilir.
+- Dijital sinyalleri işler: 0 (LOW) veya 1 (HIGH).
+- Yazılım ile kontrol edilir: yönü, durumu, kesme (interrupt) ayarları vs.
+- Genellikle **pull-up** veya **pull-down** dirençlerle desteklenebilir.
+- Alternatif işlevler (UART, SPI, PWM vb.) için çoklu görevli olabilir.
+
+---
+
+## 🔧 Stellaris LM3S811 GPIO Yapısı
+
+LM3S811 mikrodenetleyicisi, ARM Cortex-M3 tabanlı olup oldukça esnek bir GPIO mimarisi sunar.
+<img width="803" height="766" alt="image" src="https://github.com/user-attachments/assets/cf84c14d-b5bd-4ef9-9e81-77c753217458" />
+
+
+
+### 📦 Genel Yapı:
+
+| Özellik | Açıklama |
+| --- | --- |
+| **GPIO Port Sayısı** | 5 port (örneğin: Port A, B, C, D, E) |
+| **Her Portta Pin Sayısı** | 8 pin (maksimum) |
+| **Toplam GPIO Sayısı** | 32 kullanıcı tanımlı GPIO |
+| **Alternatif Fonksiyonlar** | UART, SSI, PWM, ADC, I2C gibi çevresel birimlerle paylaşımlı |
+| **Pad Kontrolü** | Open-drain, pull-up/down, drive strength ayarları yapılabilir |
+| **Kesme (Interrupt) Desteği** | Her pin için ayrı kesme ayarı yapılabilir |
+| **Yazılım Kontrolü** | StellarisWare API ile kolay programlama (örnek: `GPIOPinWrite`, `GPIOPinTypeGPIOOutput`) |
+
+### 🧩 GPIO Register Yapısı:
+
+| Register | Görevi |
+| --- | --- |
+| `GPIODIR` | Pin yönü: giriş (0) / çıkış (1) |
+| `GPIODATA` | Pin veri okuma/yazma |
+| `GPIOIS`, `GPIOIBE`, `GPIOIEV`, `GPIOIM` | Kesme yapılandırmaları |
+| `GPIOAFSEL` | Alternatif fonksiyon seçimi |
+| `GPIODR2R`, `GPIODR4R`, `GPIODR8R` | Sürücü gücü ayarları |
+| `GPIOPUR`, `GPIOPDR` | Pull-up / Pull-down dirençleri |
+
+---
+
+## 🛠️ Programlama Örneği (StellarisWare ile)
+
+```c
+// Port C'deki PIN_4 çıkış olarak tanımlanıyor
+SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOC);
+GPIOPinTypeGPIOOutput(GPIO_PORTC_BASE, GPIO_PIN_4);
+
+// PIN_4'e HIGH sinyali gönderiliyor
+GPIOPinWrite(GPIO_PORTC_BASE, GPIO_PIN_4, GPIO_PIN_4);
+
+```
+
+---
+
+## 🎯 Uygulama Alanları
+
+- LED kontrolü
+- Buton okuma
+- Sensör veri alma
+- Motor sürme (PWM ile)
+- Seri haberleşme (UART, SPI, I2C pinleri üzerinden)
+
+---
+
+Şimdi Stellaris LM3S811 mikrodenetleyicisi özelinde **GPIO veri işleme (DATA)**, **kesme modu (Interrupt Mode)** ve **pad kontrolü (Pad Control)** kavramlarını detaylıca açıklayalım:
+
+<img width="721" height="572" alt="image 1" src="https://github.com/user-attachments/assets/ea6d9179-0fef-4b83-8014-9681c1dc8e36" />
+
+
+---
+
+## 🧠 1. GPIO DATA (Veri İşleme)
+
+GPIO pinleri üzerinden dijital veri **okuma** ve **yazma** işlemleri `GPIODATA` register’ı ile yapılır.
+
+### 📌 Temel İşlev:
+
+- **Yazma (Output):** Pin HIGH (1) veya LOW (0) yapılır.
+- **Okuma (Input):** Pinin dijital seviyesi okunur.
+
+```c
+// Örnek: Port C, Pin 4'e HIGH yazmak
+GPIOPinWrite(GPIO_PORTC_BASE, GPIO_PIN_4, GPIO_PIN_4);
+
+// Örnek: Buton durumu okuma
+uint8_t button = GPIOPinRead(GPIO_PORTA_BASE, GPIO_PIN_2);
+
+```
+
+---
+
+## ⚡ 2. Interrupt Mode (Kesme Modu)
+
+Her GPIO pini, olaylara tepki vermek için **kesme (interrupt)** modunda yapılandırılabilir. Bu sayede mikrodenetleyici, sürekli pin durumu kontrol etmek yerine sadece değişiklik olduğunda işlem yapar.
+
+### 🔧 İlgili Register’lar:
+
+| Register | Görev |
+| --- | --- |
+| `GPIOIS` | Kesme tipi: seviye mi, kenar mı |
+| `GPIOIBE` | Her iki kenar mı, tek kenar mı |
+| `GPIOIEV` | Yükselen mi, düşen kenar mı |
+| `GPIOIM` | Kesme maskesi (aktif/pasif) |
+| `GPIOICR` | Kesme bayrağını temizleme |
+
+### 📌 Örnek:
+
+- Butona basıldığında kesme tetiklenir.
+- ISR (Interrupt Service Routine) içinde işlem yapılır.
+
+```c
+GPIOIntTypeSet(GPIO_PORTA_BASE, GPIO_PIN_2, GPIO_FALLING_EDGE);
+GPIOIntEnable(GPIO_PORTA_BASE, GPIO_PIN_2);
+
+```
+
+---
+
+## 🧩 3. Pad Control (Pad Ayarları)
+
+Her GPIO pini, fiziksel davranışını belirlemek için **pad kontrolü** ile yapılandırılır. Bu, pinin elektriksel karakteristiğini tanımlar.
+
+### 🔧 Ayarlanabilir Özellikler:
+
+| Özellik | Register | Açıklama |
+| --- | --- | --- |
+| **Drive Strength** | `GPIODR2R`, `GPIODR4R`, `GPIODR8R` | 2 mA, 4 mA, 8 mA çıkış gücü |
+| **Pull-Up Direnci** | `GPIOPUR` | Dahili yukarı çekme direnci |
+| **Pull-Down Direnci** | `GPIOPDR` | Dahili aşağı çekme direnci |
+| **Open-Drain Modu** | `GPIOODR` | Açık drenaj çıkışı (örneğin I²C için) |
+
+### 📌 Kullanım Senaryosu:
+
+- Buton okuma için `GPIOPUR` ile pull-up aktif edilir.
+- I²C gibi protokoller için `GPIOODR` ile open-drain yapılandırılır.
+
+```c
+// Buton için pull-up aktif etme
+HWREG(GPIO_PORTA_BASE + GPIO_O_PUR) |= GPIO_PIN_2;
+
+```
+
+---
+
+---
+
+## 🎛️ GPIO Mode Kontrolü Nedir?
+
+Her GPIO pini, sadece dijital giriş/çıkış olarak değil, aynı zamanda **alternatif fonksiyonlar** için de kullanılabilir. Bu mod kontrolü, pinin hangi işlevde çalışacağını belirler:
+
+### 🔧 Mod Türleri:
+
+| Mod | Açıklama |
+| --- | --- |
+| **GPIO (Dijital I/O)** | Genel amaçlı giriş/çıkış |
+| **AF (Alternate Function)** | UART, SPI, I²C, PWM, ADC gibi çevresel birimlere atanmış işlev |
+| **Analog Input** | ADC için analog sinyal girişi |
+| **Open-Drain Output** | I²C gibi protokoller için özel çıkış tipi |
+
+---
+
+## 📦 LM3S811’de Mode Kontrolü Nasıl Yapılır?
+
+### 🧩 İlgili Register: `GPIOAFSEL`
+
+Bu register, her pinin **alternatif fonksiyon** mu yoksa **GPIO modu** mu kullanacağını belirler.
+
+- `0`: GPIO modu (dijital giriş/çıkış)
+- `1`: Alternatif fonksiyon modu (UART, SPI vb.)
+
+```c
+// PIN_0'ı GPIO olarak ayarla
+HWREG(GPIO_PORTA_BASE + GPIO_O_AFSEL) &= ~GPIO_PIN_0;
+
+// PIN_0'ı UART fonksiyonu için ayarla
+HWREG(GPIO_PORTA_BASE + GPIO_O_AFSEL) |= GPIO_PIN_0;
+
+```
+
+---
+
+## 🧠 Mode Kontrolü ile Kombinasyonlar
+
+Mode kontrolü, diğer ayarlarla birlikte çalışır:
+
+| Ayar | Register | Açıklama |
+| --- | --- | --- |
+| **Yön (Direction)** | `GPIODIR` | Giriş (0) / Çıkış (1) |
+| **Pad Ayarı** | `GPIOPUR`, `GPIOPDR`, `GPIOODR` | Pull-up/down, open-drain |
+| **Drive Gücü** | `GPIODR2R`, `GPIODR4R`, `GPIODR8R` | 2/4/8 mA çıkış gücü |
+| **Kesme Modu** | `GPIOIS`, `GPIOIBE`, `GPIOIEV`, `GPIOIM` | Seviye/kenar tetikleme |
+
+---
+
+## Open-drain seçimi
+
+Open-drain seçimi, özellikle I²C gibi protokollerde veya çoklu cihazların aynı veri hattını paylaşması gereken durumlarda oldukça önemlidir Hakan. Stellaris LM3S811 mikrodenetleyicisinde bu yapı donanımsal olarak desteklenir ve **pad kontrolü** üzerinden yapılandırılır.
+
+Görseller başarıyla bulundu — şimdi ekranda Stellaris LM3S811’in GPIO open-drain yapılandırmasını gösteren görsel kartı görüntüleniyor ✅
+
+---
+
+## 🧩 Open-Drain Nedir?
+
+- **Open-drain çıkış**, pinin sadece LOW (0) seviyesini aktif olarak sürmesi, HIGH (1) seviyesini ise dışarıdan bir **pull-up direnci** ile elde etmesidir.
+- Bu yapı, **çoklu cihazların aynı hattı paylaşması** gereken durumlarda veri çakışmasını önler.
+
+---
+
+## ⚙️ LM3S811’de Open-Drain Seçimi Nasıl Yapılır?
+
+### 🔧 Register: `GPIOODR`
+
+Bu register, ilgili pinin **open-drain çıkış** olarak yapılandırılmasını sağlar.
+
+### 📌 Kod Örneği:
+
+```c
+// PC4 pinini open-drain olarak ayarla
+HWREG(GPIO_PORTC_BASE + GPIO_O_ODR) |= GPIO_PIN_4;
+
+```
+
+> Bu işlemden sonra, PC4 sadece LOW seviyesini aktif olarak sürer. HIGH seviyesi için harici bir pull-up direnci gerekir.
+> 
+
+---
+
+## 🛠️ Tam Yapılandırma Adımları:
+
+1. **Portu aktif et:**
+
+```c
+SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOC);
+
+```
+
+1. **Pin yönünü çıkış olarak ayarla:**
+
+```c
+GPIOPinTypeGPIOOutput(GPIO_PORTC_BASE, GPIO_PIN_4);
+
+```
+
+1. **Open-drain modunu aktif et:**
+
+```c
+HWREG(GPIO_PORTC_BASE + GPIO_O_ODR) |= GPIO_PIN_4;
+
+```
+
+1. **Harici pull-up direnci bağla (örneğin 10kΩ):**
+- PC4 pinine bir direnç ile VCC bağlanır.
+
+---
+
+##IO 266687311803806da028c784ecca06ed.md…]()
+
+
+
 
 
 
