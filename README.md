@@ -1,4 +1,5 @@
-[5 STERLLARİS LM3S811 GPIO 266687311803806da028c784ecca06ed.md](https://github.com/user-attachments/files/23861499/5.STERLLARIS.LM3S811.GPIO.266687311803806da028c784ecca06ed.md)
+
+# ARM CORTEX M3 STELLARİS LM3S811 PROJE UYGULAMA VİDEOLARI : 
 
 https://github.com/user-attachments/assets/9c93e11a-3dc3-4c86-b1c1-888b482aa85d
 
@@ -12,8 +13,7 @@ https://github.com/user-attachments/assets/2938cb61-a0ac-42db-9a79-ae3b9708c7c9
 
 
 
-
-
+# ARM CORTEX M3 STELLARİS LM3S811 PROJE NOTLARI : 
 
 
 # 1.DERS ARM İŞLEMCİ GİRİŞ
@@ -1434,9 +1434,145 @@ HWREG(GPIO_PORTC_BASE + GPIO_O_ODR) |= GPIO_PIN_4;
 1. **Harici pull-up direnci bağla (örneğin 10kΩ):**
 - PC4 pinine bir direnç ile VCC bağlanır.
 
+---------------------------------------------------------
+
+# 6.StellarisWare GPIO DETAYLAR
+
+StellarisWare ile programlama yaparken algoritma mantığı, mikrodenetleyici donanımına doğrudan erişim sağlayan adımları içerir. Özellikle LM3S811 gibi ARM Cortex-M3 tabanlı mikrodenetleyicilerde, GPIO (Giriş/Çıkış) işlemleri için tipik bir algoritma aşağıdaki gibi yapılandırılır:
+
 ---
 
-##IO 266687311803806da028c784ecca06ed.md…]()
+### 🧠 StellarisWare GPIO Programlama Algoritması
+
+| Adım | Açıklama | Kod Örneği |
+| --- | --- | --- |
+| 1️⃣ | İlgili portu aktif hale getir | `SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOX);` |
+| 2️⃣ | Pin yönünü belirle (Giriş/Çıkış) | `GPIOPinTypeGPIOOutput(GPIO_PORTX_BASE, GPIO_PIN_5);` |
+| 3️⃣ | Gerekli özel ayarları yap (pull-up, interrupt vs.) | `GPIOPadConfigSet(...);` veya `GPIOIntEnable(...)` |
+| 4️⃣ | Pin üzerinden işlem gerçekleştir | `GPIOPinWrite(GPIO_PORTX_BASE, GPIO_PIN_5, GPIO_PIN_5);` |
+
+---
+
+### 🔄 Döngüsel Algoritma Örneği (LED Blink)
+
+```c
+#include "inc/hw_memmap.h"
+#include "driverlib/sysctl.h"
+#include "driverlib/gpio.h"
+
+int main(void) {
+    SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOF);
+    GPIOPinTypeGPIOOutput(GPIO_PORTF_BASE, GPIO_PIN_1);
+
+    while(1) {
+        GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_1, GPIO_PIN_1); // LED ON
+        SysCtlDelay(2000000);
+        GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_1, 0);          // LED OFF
+        SysCtlDelay(2000000);
+    }
+}
+
+```
+
+---
+
+### 📌 Notlar
+
+- StellarisWare, düşük seviye donanım kontrolü için oldukça detaylı bir API sunar.
+- Her işlem genellikle `SysCtl`, `GPIO`, `UART`, `ADC` gibi modül fonksiyonlarıyla yapılır.
+- Algoritma mantığı, donanımın yapılandırılması → işlem yapılması → gerekirse döngü veya kesme ile kontrol şeklindedir.
+
+---
+
+### 📊 Görsel Tasarım: "LM3S811 ile 1 Saniyelik Gecikme"
+
+**Başlık**: 1 Saniyelik Gecikme – 6 MHz İşlemci ile
+
+**Bölümler**:
+
+1. **İşlemci Frekansı**: 6 MHz → 6,000,000 cycle/saniye
+2. **SysCtlDelay() Fonksiyonu**: Her çağrıda 3 cycle harcar
+3. **Gecikme Hesabı**:
+    - 1 saniye = 6,000,000 cycle
+    - Gerekli çağrı: `SysCtlDelay(2000000)`
+4. **Kod Parçası**:
+    
+    ```c
+    SysCtlDelay(2000000); // ≈ 1 saniye gecikme
+    
+    ```
+    
+5. **Alternatif Yöntem**: SysTick Timer ile kesin zamanlama
+
+---
+
+***********************************************************************************************************
+
+**STELLARİS USER MANUELS:**
+
+<img width="1127" height="683" alt="image" src="https://github.com/user-attachments/assets/cb10304c-2d67-4a5c-9e32-a33dfde297e2" />
+
+---
+
+************************************************************************************************************
+
+**ÖNEMLİ:** 
+
+```c
+GPIOPinWrite(PORT_ADRESİ, HEDEF_PINLER, VERİ);
+
+```
+
+Burada **virgülle ayrılmış her bölümün özel bir anlamı** vardır. Açalım:
+
+---
+
+## 🧠 Parametrelerin Anlamı
+
+| Sıra | Parametre | Açıklama |
+| --- | --- | --- |
+| 1. | `PORT_ADRESİ` | Hangi portun kullanılacağını belirtir (örneğin `GPIO_PORTD_BASE`) |
+| 2. | `HEDEF_PINLER` | Hangi pin(ler)e yazılacağını belirtir (örneğin `GPIO_PIN_2 | GPIO_PIN_3`) |
+| 3. | `VERİ` | Bu pinlere ne yazılacağını belirtir (örneğin `GPIO_PIN_2` → sadece PD2 HIGH) |
+
+---
+
+## 🔧 Örnek Üzerinden Açıklama
+
+```c
+GPIOPinWrite(GPIO_PORTD_BASE, GPIO_PIN_2 | GPIO_PIN_3, GPIO_PIN_2);
+
+```
+
+- **PORTD** portuna yazılıyor.
+- **PD2 ve PD3** pinleri hedef alınıyor.
+- **PD2 HIGH**, **PD3 LOW** yapılmak isteniyor.
+
+Yani:
+
+- PD2’ye 1 (LED yanar)
+- PD3’e 0 (LED sönük)
+
+---
+
+## 🎯 Neden Bu Yapı Kullanılır?
+
+Bu yapı sayesinde:
+
+- Aynı anda birden fazla pine veri yazılabilir.
+- Hangi pinlerin etkileneceği net bir şekilde belirtilir.
+- Donanım seviyesinde hızlı ve güvenli kontrol sağlanır.
+
+---
+
+## 🧪 Kısa Özet
+
+Senin dediğin gibi:
+
+- **Virgülden önceki kısım**: *“Nereye yazılacak?”*
+- **Virgülden sonraki kısım**: *“Ne yazılacak?”*
+
+Bu mantık, özellikle **donanım kontrollü API’lerde** (DriverLib gibi) çok yaygındır.
 
 
 
